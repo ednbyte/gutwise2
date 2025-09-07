@@ -1,7 +1,7 @@
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 import { useParams, Link } from 'react-router-dom';
 import { ArrowLeft, Clock, Users, ChefHat, Heart } from 'lucide-react';
-import { mockRecipes } from '../mock';
+import { recipeApi } from '../services/api';
 import { Badge } from '../components/ui/badge';
 import { Button } from '../components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '../components/ui/card';
@@ -9,13 +9,47 @@ import { Separator } from '../components/ui/separator';
 
 const RecipeDetail = () => {
   const { id } = useParams();
-  const recipe = mockRecipes.find(r => r.id === id);
+  const [recipe, setRecipe] = useState(null);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(null);
 
-  if (!recipe) {
+  useEffect(() => {
+    const fetchRecipe = async () => {
+      try {
+        setLoading(true);
+        setError(null);
+        const recipeData = await recipeApi.getRecipe(id);
+        setRecipe(recipeData);
+      } catch (err) {
+        setError('Recipe not found or failed to load.');
+        console.error('Error fetching recipe:', err);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    if (id) {
+      fetchRecipe();
+    }
+  }, [id]);
+
+  if (loading) {
+    return (
+      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
+        <div className="text-center">
+          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-green-600 mx-auto mb-4"></div>
+          <p className="text-gray-600">Loading recipe...</p>
+        </div>
+      </div>
+    );
+  }
+
+  if (error || !recipe) {
     return (
       <div className="min-h-screen bg-gray-50 flex items-center justify-center">
         <div className="text-center">
           <h1 className="text-2xl font-bold text-gray-900 mb-4">Recipe Not Found</h1>
+          <p className="text-gray-600 mb-4">{error}</p>
           <Link to="/recipes">
             <Button>
               <ArrowLeft className="mr-2 h-4 w-4" />
@@ -64,7 +98,7 @@ const RecipeDetail = () => {
                 <CardContent className="p-4 text-center">
                   <Clock className="h-6 w-6 text-green-600 mx-auto mb-2" />
                   <div className="text-sm text-gray-600">Prep Time</div>
-                  <div className="font-semibold">{recipe.prepTime}</div>
+                  <div className="font-semibold">{recipe.prep_time}</div>
                 </CardContent>
               </Card>
               
@@ -72,7 +106,7 @@ const RecipeDetail = () => {
                 <CardContent className="p-4 text-center">
                   <ChefHat className="h-6 w-6 text-blue-600 mx-auto mb-2" />
                   <div className="text-sm text-gray-600">Cook Time</div>
-                  <div className="font-semibold">{recipe.cookTime}</div>
+                  <div className="font-semibold">{recipe.cook_time}</div>
                 </CardContent>
               </Card>
               
@@ -98,7 +132,7 @@ const RecipeDetail = () => {
               <CardContent className="p-6">
                 <h3 className="text-lg font-semibold mb-4">Dietary Information</h3>
                 <div className="flex flex-wrap gap-2">
-                  {recipe.dietaryTags.map((tag) => (
+                  {recipe.dietary_tags.map((tag) => (
                     <Badge key={tag} variant="secondary" className="text-sm">
                       {tag}
                     </Badge>
