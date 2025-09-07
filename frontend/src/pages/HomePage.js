@@ -1,10 +1,70 @@
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import { ArrowRight, Clock, Users, Heart } from 'lucide-react';
-import { personalStory, mockRecipes } from '../mock';
+import { recipeApi, personalStoryApi } from '../services/api';
 
 const HomePage = () => {
-  const featuredRecipes = mockRecipes.slice(0, 3);
+  const [featuredRecipes, setFeaturedRecipes] = useState([]);
+  const [personalStory, setPersonalStory] = useState(null);
+  const [totalRecipes, setTotalRecipes] = useState(0);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(null);
+
+  useEffect(() => {
+    const fetchData = async () => {
+      try {
+        setLoading(true);
+        setError(null);
+
+        // Fetch featured recipes (first 3)
+        const recipes = await recipeApi.getRecipes({ limit: 3 });
+        setFeaturedRecipes(recipes);
+
+        // Fetch all recipes count
+        const allRecipes = await recipeApi.getRecipes();
+        setTotalRecipes(allRecipes.length);
+
+        // Fetch personal story
+        const story = await personalStoryApi.getPersonalStory();
+        setPersonalStory(story);
+
+      } catch (err) {
+        setError('Failed to load content. Please try again later.');
+        console.error('Error fetching homepage data:', err);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchData();
+  }, []);
+
+  if (loading) {
+    return (
+      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
+        <div className="text-center">
+          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-green-600 mx-auto mb-4"></div>
+          <p className="text-gray-600">Loading nourishing content...</p>
+        </div>
+      </div>
+    );
+  }
+
+  if (error) {
+    return (
+      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
+        <div className="text-center">
+          <p className="text-red-600 mb-4">{error}</p>
+          <button 
+            onClick={() => window.location.reload()} 
+            className="bg-green-600 text-white px-4 py-2 rounded-lg hover:bg-green-700"
+          >
+            Try Again
+          </button>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="min-h-screen bg-gray-50">
@@ -53,7 +113,7 @@ const HomePage = () => {
                 <Heart className="h-8 w-8 text-green-600" />
               </div>
               <h3 className="text-2xl font-bold text-gray-900 mb-2">
-                {mockRecipes.length}+ Recipes
+                {totalRecipes}+ Recipes
               </h3>
               <p className="text-gray-600">Carefully tested gut-friendly meals</p>
             </div>
@@ -104,7 +164,7 @@ const HomePage = () => {
                 </div>
                 <div className="p-6">
                   <div className="flex flex-wrap gap-2 mb-3">
-                    {recipe.dietaryTags.slice(0, 2).map((tag) => (
+                    {recipe.dietary_tags.slice(0, 2).map((tag) => (
                       <span
                         key={tag}
                         className="bg-green-100 text-green-700 px-3 py-1 rounded-full text-xs font-medium"
@@ -120,7 +180,7 @@ const HomePage = () => {
                     {recipe.description}
                   </p>
                   <div className="flex items-center justify-between text-sm text-gray-500">
-                    <span>{recipe.prepTime + recipe.cookTime}</span>
+                    <span>{recipe.prep_time}</span>
                     <span>{recipe.servings} servings</span>
                   </div>
                 </div>
@@ -142,37 +202,39 @@ const HomePage = () => {
       </section>
 
       {/* Personal Story Section */}
-      <section id="story" className="py-20 bg-white">
-        <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="text-center mb-12">
-            <h2 className="text-3xl font-bold text-gray-900 mb-4">{personalStory.title}</h2>
-            <p className="text-xl text-gray-600">{personalStory.subtitle}</p>
-          </div>
-          
-          <div className="grid grid-cols-1 lg:grid-cols-2 gap-12 items-center">
-            <div className="space-y-6">
-              {personalStory.content.map((paragraph, index) => (
-                <p key={index} className="text-gray-700 leading-relaxed">
-                  {paragraph}
-                </p>
-              ))}
+      {personalStory && (
+        <section id="story" className="py-20 bg-white">
+          <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div className="text-center mb-12">
+              <h2 className="text-3xl font-bold text-gray-900 mb-4">{personalStory.title}</h2>
+              <p className="text-xl text-gray-600">{personalStory.subtitle}</p>
             </div>
             
-            <div className="relative">
-              <div className="aspect-w-4 aspect-h-3 rounded-xl overflow-hidden shadow-lg">
-                <img
-                  src={personalStory.image}
-                  alt="Healing foods"
-                  className="w-full h-80 object-cover"
-                />
+            <div className="grid grid-cols-1 lg:grid-cols-2 gap-12 items-center">
+              <div className="space-y-6">
+                {personalStory.content.map((paragraph, index) => (
+                  <p key={index} className="text-gray-700 leading-relaxed">
+                    {paragraph}
+                  </p>
+                ))}
               </div>
-              <div className="absolute -bottom-6 -right-6 bg-green-600 text-white p-4 rounded-xl shadow-lg">
-                <Heart className="h-8 w-8" />
+              
+              <div className="relative">
+                <div className="aspect-w-4 aspect-h-3 rounded-xl overflow-hidden shadow-lg">
+                  <img
+                    src={personalStory.image}
+                    alt="Healing foods"
+                    className="w-full h-80 object-cover"
+                  />
+                </div>
+                <div className="absolute -bottom-6 -right-6 bg-green-600 text-white p-4 rounded-xl shadow-lg">
+                  <Heart className="h-8 w-8" />
+                </div>
               </div>
             </div>
           </div>
-        </div>
-      </section>
+        </section>
+      )}
 
       {/* CTA Section */}
       <section className="py-16 bg-gradient-to-r from-green-600 to-blue-600">
