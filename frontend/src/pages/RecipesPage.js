@@ -1,7 +1,7 @@
-import React, { useState, useMemo } from 'react';
+import React, { useState, useMemo, useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import { Search, Filter, Clock, Users, ChefHat } from 'lucide-react';
-import { mockRecipes, dietaryFilters } from '../mock';
+import { recipeApi } from '../services/api';
 import { Button } from '../components/ui/button';
 import { Input } from '../components/ui/input';
 import { Badge } from '../components/ui/badge';
@@ -11,10 +11,40 @@ const RecipesPage = () => {
   const [searchTerm, setSearchTerm] = useState('');
   const [selectedFilters, setSelectedFilters] = useState([]);
   const [showFilters, setShowFilters] = useState(false);
+  const [recipes, setRecipes] = useState([]);
+  const [dietaryFilters, setDietaryFilters] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(null);
+
+  useEffect(() => {
+    const fetchInitialData = async () => {
+      try {
+        setLoading(true);
+        setError(null);
+
+        // Fetch all recipes and dietary filters
+        const [recipesData, filtersData] = await Promise.all([
+          recipeApi.getRecipes(),
+          recipeApi.getDietaryFilters()
+        ]);
+
+        setRecipes(recipesData);
+        setDietaryFilters(filtersData);
+      } catch (err) {
+        setError('Failed to load recipes. Please try again later.');
+        console.error('Error fetching recipes data:', err);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchInitialData();
+  }, []);
 
   const filteredRecipes = useMemo(() => {
-    return mockRecipes.filter(recipe => {
-      const matchesSearch = recipe.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
+    return recipes.filter(recipe => {
+      const matchesSearch = searchTerm === '' || 
+                           recipe.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
                            recipe.description.toLowerCase().includes(searchTerm.toLowerCase()) ||
                            recipe.ingredients.some(ingredient => 
                              ingredient.toLowerCase().includes(searchTerm.toLowerCase())
@@ -22,12 +52,12 @@ const RecipesPage = () => {
       
       const matchesFilters = selectedFilters.length === 0 || 
                             selectedFilters.every(filter => 
-                              recipe.dietaryTags.includes(filter)
+                              recipe.dietary_tags.includes(filter)
                             );
       
       return matchesSearch && matchesFilters;
     });
-  }, [searchTerm, selectedFilters]);
+  }, [recipes, searchTerm, selectedFilters]);
 
   const toggleFilter = (filterId) => {
     setSelectedFilters(prev => 
@@ -41,6 +71,33 @@ const RecipesPage = () => {
     setSelectedFilters([]);
     setSearchTerm('');
   };
+
+  if (loading) {
+    return (
+      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
+        <div className="text-center">
+          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-green-600 mx-auto mb-4"></div>
+          <p className="text-gray-600">Loading delicious recipes...</p>
+        </div>
+      </div>
+    );
+  }
+
+  if (error) {
+    return (
+      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
+        <div className="text-center">
+          <p className="text-red-600 mb-4">{error}</p>
+          <button 
+            onClick={() => window.location.reload()} 
+            className="bg-green-600 text-white px-4 py-2 rounded-lg hover:bg-green-700"
+          >
+            Try Again
+          </button>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="min-h-screen bg-gray-50">
@@ -174,7 +231,7 @@ const RecipesPage = () => {
                   </div>
                   <CardContent className="p-6">
                     <div className="flex flex-wrap gap-1 mb-3">
-                      {recipe.dietaryTags.slice(0, 3).map((tag) => (
+                      {recipe.dietary_tags.slice(0, 3).map((tag) => (
                         <Badge key={tag} variant="secondary" className="text-xs">
                           {tag}
                         </Badge>
@@ -192,7 +249,7 @@ const RecipesPage = () => {
                     <div className="flex items-center justify-between text-sm text-gray-500">
                       <div className="flex items-center gap-1">
                         <Clock className="h-4 w-4" />
-                        <span>{recipe.prepTime}</span>
+                        <span>{recipe.prep_time}</span>
                       </div>
                       <div className="flex items-center gap-1">
                         <Users className="h-4 w-4" />
