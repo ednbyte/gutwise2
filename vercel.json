@@ -24,13 +24,10 @@
     }
   ],
   "env": {
-    "MONGO_URL": "@mongo_url",
-    "DB_NAME": "@db_name",
-    "REACT_APP_BACKEND_URL": "@react_app_backend_url"
-  },
-  "functions": {
-    "backend/server.py": {
-      "maxDuration": 30
-    }
+  "MONGO_URL": "mongodb+srv://ehabtegeb_db_user:Hello@cluster0.o3tqyje.mongodb.net/gutwise?retryWrites=true&w=majority&appName=Cluster0",
+  "DB_NAME": "gutwise",
+    "REACT_APP_BACKEND_URL": "https://gutwise.vercel.app"
   }
+  
 }
+
