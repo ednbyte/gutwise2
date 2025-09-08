@@ -4,9 +4,11 @@ services:
     env: python
     region: oregon
     plan: free
-    buildCommand: pip install -r backend/requirements.txt
+    buildCommand: |
+      cd backend
+      pip install -r requirements.txt
     startCommand: cd backend && uvicorn server:app --host 0.0.0.0 --port $PORT
-    healthCheckPath: /
+    healthCheckPath: /docs
     envVars:
       - key: PYTHON_VERSION
-        value: 3.11.0
+        value: 3.11.9
