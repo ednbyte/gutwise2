@@ -2,6 +2,8 @@ from fastapi import FastAPI, APIRouter, HTTPException, Query
 from dotenv import load_dotenv
 from starlette.middleware.cors import CORSMiddleware
 from motor.motor_asyncio import AsyncIOMotorClient
+from fastapi.staticfiles import StaticFiles
+from fastapi.responses import FileResponse
 import os
 import logging
 from pathlib import Path
@@ -165,6 +167,7 @@ async def get_personal_story():
 # Include the router in the main app
 app.include_router(api_router)
 
+# Add CORS middleware
 app.add_middleware(
     CORSMiddleware,
     allow_credentials=True,
@@ -379,3 +382,12 @@ async def startup_event():
 @app.on_event("shutdown")
 async def shutdown_db_client():
     client.close()
+
+# React static file serving - MUST BE AT THE VERY END
+if os.path.exists("build"):
+    # Serve static files (CSS, JS, images, etc.)
+    app.mount("/static", StaticFiles(directory="build/static"), name="static")
+    
+    # Check for other common asset directories
+    if os.path.exists("build/assets"):
+        app.mount("/assets", Sta
