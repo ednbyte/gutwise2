@@ -390,4 +390,32 @@ if os.path.exists("build"):
     
     # Check for other common asset directories
     if os.path.exists("build/assets"):
-        app.mount("/assets", Sta
+        app.mount("/assets", StaticFiles(directory="build/assets"), name="assets")
+    
+    # Serve favicon and manifest files directly from build
+    @app.get("/favicon.ico")
+    async def favicon():
+        return FileResponse("build/favicon.ico")
+    
+    @app.get("/manifest.json")
+    async def manifest():
+        return FileResponse("build/manifest.json")
+    
+    # Catch-all route for React Router - MUST BE LAST
+    @app.get("/{full_path:path}")
+    async def serve_react_app(full_path: str):
+        # Don't serve React for API routes
+        if full_path.startswith("api"):
+            raise HTTPException(status_code=404, detail="API route not found")
+        
+        # Serve React app for all other routes
+        return FileResponse("build/index.html")
+else:
+    # Fallback when build directory doesn't exist
+    @app.get("/")
+    async def no_build_warning():
+        return {
+            "message": "React build not found", 
+            "instructions": "Run 'npm run build' and ensure the build folder is in the same directory as server.py",
+            "api_available": "API is available at /api/"
+        }
