@@ -1,14 +1,22 @@
 services:
   - type: web
-    name: your-preferred-name-here
+    name: gutwise-app
     env: python
     region: oregon
     plan: free
     runtime: python
     buildCommand: |
       cd frontend && npm install && npm run build
+      echo "=== Checking if build folder exists ==="
+      ls -la build/
+      echo "=== Copying build folder ==="
       cp -r build ../backend/
-      cd ../backend && pip install -r requirements.txt
+      cd ../backend
+      echo "=== Contents of backend directory ==="
+      ls -la
+      echo "=== Checking if build folder copied successfully ==="
+      ls -la build/ || echo "Build folder not found in backend!"
+      pip install -r requirements.txt
     startCommand: cd backend && uvicorn server:app --host 0.0.0.0 --port $PORT
     healthCheckPath: /api/api/
     envVars:
