@@ -6,6 +6,7 @@ from fastapi.staticfiles import StaticFiles
 from fastapi.responses import FileResponse
 import os
 import logging
+import ssl
 from pathlib import Path
 from pydantic import BaseModel, Field
 from typing import List, Optional
@@ -21,7 +22,8 @@ load_dotenv(ROOT_DIR / '.env')
 mongo_url = os.environ['MONGO_URL']
 client = AsyncIOMotorClient(
     mongo_url,
-    tlsAllowInvalidCertificates=True,
+    ssl=True,
+    ssl_cert_reqs=ssl.CERT_NONE,
     serverSelectionTimeoutMS=5000,
     connectTimeoutMS=10000,
     socketTimeoutMS=10000,
