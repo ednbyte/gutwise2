@@ -22,11 +22,13 @@ load_dotenv(ROOT_DIR / '.env')
 mongo_url = os.environ['MONGO_URL']
 client = AsyncIOMotorClient(
     mongo_url,
-    ssl=True,
-    ssl_cert_reqs=ssl.CERT_NONE,
-    serverSelectionTimeoutMS=5000,
-    connectTimeoutMS=10000,
-    socketTimeoutMS=10000,
+    tls=True,
+    tlsAllowInvalidCertificates=True,
+    tlsAllowInvalidHostnames=True,
+    tlsInsecure=True,
+    serverSelectionTimeoutMS=30000,
+    connectTimeoutMS=30000,
+    socketTimeoutMS=30000,
 )
 db = client[os.environ['DB_NAME']]
 
